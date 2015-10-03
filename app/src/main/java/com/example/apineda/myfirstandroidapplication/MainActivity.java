@@ -1,7 +1,10 @@
 package com.example.apineda.myfirstandroidapplication;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.ShareActionProvider;
@@ -15,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -30,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Logic elements
     ArrayAdapter arrayAdapter;
     ArrayList nameList = new ArrayList();
+
+    private static final String PREFS = "prefs";
+    private static final String PREF_NAME = "name";
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +57,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, nameList);
         listView.setAdapter(arrayAdapter);
         listView.setOnItemClickListener(this);
+
+        // Welcome user
+        displayWelcome();
+    }
+
+    private void displayWelcome () {
+
+        // Accessing the device storage
+        sharedPreferences = getSharedPreferences(PREFS, MODE_PRIVATE);
+
+        // Reading user's name
+        String usersName = sharedPreferences.getString(PREF_NAME, "");
+
+        if (usersName != null && !usersName.isEmpty()) {
+
+            Toast.makeText(this, "Hello " + usersName, Toast.LENGTH_LONG).show();
+
+        } else {
+
+            AlertDialog.Builder alert = new AlertDialog.Builder(this);
+            alert.setTitle("Hello!");
+            alert.setMessage("What's your name?");
+
+            // Edit text for name
+            final EditText input = new EditText(this);
+            alert.setView(input);
+
+            // Ok to save name
+            alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    // Name written by the user
+                    String inputName = input.getText().toString();
+
+                    if (inputName != null && !inputName.isEmpty()) {
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(PREF_NAME, inputName);
+                        editor.commit();
+
+                        // Welcome new user
+                        Toast.makeText(getApplicationContext(), "Hello "+ inputName, Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+
+            // Cancel button
+            alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+
+            alert.show();
+
+        }
     }
 
     @Override
