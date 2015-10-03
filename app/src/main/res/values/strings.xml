@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">MyFirstAndroidApplication</string>
 
-    <string name="hello_world">Adriana is learning Android!</string>
+    <string name="textView">Adriana is learning Android!</string>
     <string name="action_settings">Settings</string>
+    <string name="button">Hello</string>
+    <string name="hint">Anything</string>
 </resources>
