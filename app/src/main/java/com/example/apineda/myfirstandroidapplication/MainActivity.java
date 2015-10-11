@@ -1,5 +1,6 @@
 package com.example.apineda.myfirstandroidapplication;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,9 +40,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     EditText editText;
     ListView listView;
     ShareActionProvider shareAction;
+    ProgressDialog progressDialog;
 
     // Logic elements
-    ArrayAdapter arrayAdapter;
+    JSONAdapter mJsonAdapter;
     ArrayList nameList = new ArrayList();
 
     private static final String QUERY_URL = "http://openlibrary.org/search.json?q=";
@@ -72,13 +74,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         listView = (ListView) findViewById(R.id.list_view);
-
-        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, nameList);
-        listView.setAdapter(arrayAdapter);
         listView.setOnItemClickListener(this);
 
         // Welcome user
         displayWelcome();
+
+        mJsonAdapter = new JSONAdapter(this,getLayoutInflater());
+        listView.setAdapter(mJsonAdapter);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Searching for Books");
+        progressDialog.setCancelable(false);
     }
 
     private void displayWelcome () {
@@ -179,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editText.getText().clear();
 
         nameList.add(text);
-        arrayAdapter.notifyDataSetChanged();
+//        arrayAdapter.notifyDataSetChanged();
 
         setShareIntent();
     }
@@ -187,7 +193,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        Log.d("omg android", position + ":" + nameList.get(position));
+        JSONObject jsonObject = (JSONObject) mJsonAdapter.getItem(position);
+        String coverId = jsonObject.optString("cover_i", "");
+        String title = jsonObject.optString("title");
+
+        Intent detailIntent = new Intent(this, DetailActivity.class);
+        detailIntent.putExtra("coverID", coverId);
+        detailIntent.putExtra("title", title);
+        startActivity(detailIntent);
     }
 
     // Query books
@@ -204,20 +217,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Client for networking
         AsyncHttpClient httpClient = new AsyncHttpClient();
+        progressDialog.show();
+
         httpClient.get(QUERY_URL + urlString, new JsonHttpResponseHandler(){
             @Override
             public void onSuccess(JSONObject jsonObject) {
+
+                progressDialog.dismiss();
 
                 // Display a "Toast" message
                 // to announce your success
                 Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
 
                 // 8. For now, just log results
-                Log.d("omg android", jsonObject.toString());
+                mJsonAdapter.updateData(jsonObject.optJSONArray("docs"));
+
             }
 
             @Override
             public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+
+                progressDialog.dismiss();
 
                 // Display a "Toast" message
                 // to announce the failure
